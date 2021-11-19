@@ -253,12 +253,31 @@ class Cuadro(Frame):
 
         self.y= y
         self.x= x
-        self.data = StringVar()
+
+        self.fila = str(y)
+        self.columna = str(x)
+
+        nombre_entry = "valor" + self.fila + self.columna 
+
+        self.data = StringVar(name=nombre_entry)
         self.entrada = Entry(self.z, textvariable=self.data, width= 42)
         self.entrada.grid(row= self.y, column=self.x, pady=4, padx=8)
         self.lista_de_objetos.append((self.entrada))
         self.lista_de_datos.append((self.data))
     
+    #----------------------------------------------------------------------
+    def agregar_entry_2(self, y, x):
+        """Método de la clase Cuadro. \n
+        Permite agregar una entrada de texto al Frame creado con la Clase Cuadro."""
+
+        self.y= y
+        self.x= x
+        self.data = StringVar()
+        self.entrada = Entry(self.z, textvariable=self.data, width= 42)
+        self.entrada.grid(row= self.y, column=self.x, pady=4, padx=8)
+        self.lista_de_objetos.append((self.entrada))
+        self.lista_de_datos.append((self.data))
+
     #----------------------------------------------------------------------
     def agregar_entry_personalizado(self, y, x, ancho, numero_de_columnas_unidas):
         """Método de la clase Cuadro. \n
@@ -370,7 +389,7 @@ class Cuadro(Frame):
         self.lista_de_datos.append((self.combo))
 
     #----------------------------------------------------------------------
-    def agregar_combobox_personalizado(self, y, x, ancho, listadesplegable, estado = "readonly"):
+    def agregar_combobox_personalizado(self, y, x, ancho, listadesplegable, predeterminado, estado='readonly'):
         """Método de la clase Cuadro. \n
         Permite agregar una lista desplegable al Frame creado con la Clase Cuadro."""
         
@@ -382,9 +401,56 @@ class Cuadro(Frame):
         self.combo = ttk.Combobox(self.z, state=estado_definido, width=ancho_definido)
         self.combo.grid(row = self.y, column = self.x, pady=4, padx=8)
         self.combo["values"] = self.listadesplegable
-        self.combo.set(' ')
+        self.combo.set(predeterminado)
         self.lista_de_objetos.append((self.combo))
         self.lista_de_datos.append((self.combo))
+
+    #----------------------------------------------------------------------
+    def agregar_combobox_editable(self, y, x, ancho, listadesplegable, predeterminado, estado='normal'):
+        """Método de la clase Cuadro. \n
+        Permite agregar una lista desplegable al Frame creado con la Clase Cuadro."""
+        
+        self.y = y
+        self.x = x
+        self.listadesplegable = listadesplegable
+        ancho_definido = int(ancho)
+        estado_definido = str(estado)
+        self.combo = ttk.Combobox(self.z, state=estado_definido, width=ancho_definido)
+        self.combo.grid(row = self.y, column = self.x, pady=4, padx=8)
+        self.combo["values"] = self.listadesplegable
+        self.combo.set(predeterminado)
+        self.lista_de_objetos.append((self.combo))
+        self.lista_de_datos.append((self.combo))
+    
+    #----------------------------------------------------------------------
+    def agregar_combobox_decisor(self, y, x, ancho, listadesplegable, tabla_a_filtrar, nombre_columna, posicion_ordinal):
+        """Método de la clase Cuadro. \n
+        Permite agregar una lista desplegable al Frame creado con la Clase Cuadro."""
+        
+        self.y = y
+        self.x = x
+        self.listadesplegable = listadesplegable
+
+        nombre_posicion = str(x) + "," + str(y)
+        numero_posicion = int(posicion_ordinal)
+        tabla = tabla_a_filtrar
+        columna_nombre = nombre_columna
+
+        valordecisor = StringVar(name = nombre_posicion)
+        decisor = ttk.Combobox(self.z, state="readonly", width=ancho, textvariable = valordecisor)
+        valordecisor.trace("w", lambda name, index, mode, valor=valordecisor: self.cambio_valor(valor, decisor, numero_posicion, tabla, columna_nombre))
+    
+        decisor.set('')
+        decisor["values"] = self.listadesplegable
+        
+        #ultimovalor = None
+        #self.valordecisor = valordecisor
+
+        decisor.grid(row = self.y, column = self.x, pady=4, padx=8)        
+        self.lista_de_objetos.append((decisor))
+        self.lista_de_datos.append((decisor))
+
+        #self.z.after(10, self.update)
 
     #----------------------------------------------------------------------
     def agregar_spinbox(self, y, x, inicio, fin, incremento, defecto):
@@ -424,6 +490,70 @@ class Cuadro(Frame):
         self.cal["state"] = "normal"
         self.lista_de_objetos.append((self.cal))
         self.lista_de_datos.append((self.cal))
+     
+    #----------------------------------------------------------------------
+    def cambio_valor(self, nombre_objeto, widget, posicion_ordinal, tabla, nombre_columna):
+
+        ultimo_valor = str(nombre_objeto)
+        valor_ingresado = widget.get()
+        tabla_a_filtrar = tabla
+        nombre_col = nombre_columna
+        print(valor_ingresado)
+        print(ultimo_valor)
+        #self.z.after(1000, self.update)
+
+        #print(self.rejilla)
+        if valor_ingresado != '':
+            tupla_interna = self.rejilla[posicion_ordinal]
+            print(tupla_interna)
+            
+            # Obtengo la lista para modificar
+            lista_interna = list(tupla_interna)
+            tabla_filtrada = tabla_a_filtrar[tabla_a_filtrar[nombre_col]==valor_ingresado]
+            lista_validada = list(set(tabla_filtrada['Provincia']))
+            lista_interna[3] = lista_validada
+            tupla_final = tuple(lista_interna)
+            print(tupla_final)
+
+            self.rejilla[posicion_ordinal] = tupla_final
+            self.actualizar_rejilla(self.rejilla)
+            
+        #datos_ingresados = self.obtener_lista_de_datos()
+        #print(datos_ingresados[12])
+        #self.agregar_rejilla(self.rejilla)
+        #self.insertar_lista_de_datos(datos_ingresados)
+
+    #----------------------------------------------------------------------
+
+    def actualizar_rejilla(self, rejilla):
+        """Método de la clase Cuadro. \n
+        Permite utilizar una tupla de tuplas para incorporar diversos wingets al Frame creado con la Clase Cuadro."""
+
+        self.rejilla = rejilla
+
+        self.tabla = pd.DataFrame(self.rejilla)
+
+        for i,row in self.tabla.iterrows():
+            
+            if row[0] == 'CXR':
+                
+                # En este caso row[3] debe ser una lista:
+                self.agregar_combobox(row[1], row[2], row[3])
+    #----------------------------------------------------------------------
+    
+    def actualizar(self):
+        if self.lastupdated != None:
+            if self.lastupdated == "vacio" and self.valordecisor.get() == "PUNO":
+                if self.widget == False:
+                    self.widget = DateEntry(self.root)
+
+            elif self.lastupdated == "vacio" and self.valordecisor.get() == "No":
+                self.height.destroy()
+                self.lastupdated = None
+                self.existe = False
+
+        self.after(10, self.actualizar)
+        
 
     #----------------------------------------------------------------------
     def agregar_rejilla(self, rejilla):
@@ -432,7 +562,7 @@ class Cuadro(Frame):
 
         self.rejilla = rejilla
 
-        self.tabla = pd.DataFrame(list(self.rejilla))
+        self.tabla = pd.DataFrame(self.rejilla)
 
         for i,row in self.tabla.iterrows():
             
@@ -456,6 +586,10 @@ class Cuadro(Frame):
             elif row[0] == 'E':
 
                 self.agregar_entry(row[1], row[2])
+
+            elif row[0] == 'EE':
+
+                self.agregar_entry_2(row[1], row[2])
             
             elif row[0] == 'EL':
 
@@ -490,6 +624,15 @@ class Cuadro(Frame):
             elif row[0] == 'CXP':
                 
                 self.agregar_combobox_personalizado(row[1], row[2], row[3], row[4], row[5])
+
+            elif row[0] == 'CXE':
+                
+                self.agregar_combobox_editable(row[1], row[2], row[3], row[4], row[5])
+            
+            elif row[0] == 'CXD':
+                
+                # En este caso row[3] debe ser una lista:
+                self.agregar_combobox_decisor(row[1], row[2], row[3], row[4], row[5], row[6], row[7])
             
             elif row[0] == "SB":
 
@@ -1306,7 +1449,7 @@ class Vitrina_busquedaep(Frame):
                 text=row[1],
                 font=formato.tipo_de_letra_tablaep,
                 fg = formato.color_negro,
-                width= 17,#se modifico 
+                width= 18,#se modifico 
                 height=1, 
                 relief='groove',
                 bg=formato.fondo_encabezados_de_tabla
@@ -1351,17 +1494,34 @@ class Vitrina_busquedaep(Frame):
 
             tabla_valor = pd.DataFrame(elementos_valores)
             for i,row in tabla_valor.iterrows():
-                valor = Label(
-                    valores_subframe, 
-                    text=row[1],
-                    font=formato.tipo_de_letra_tablaep,
-                    width=17,
-                    height=3,#se modifico  
-                    relief='groove',
-                    bg= formato.fondo_valores_de_tabla,
-                    wraplength=125, 
-                    justify="center")
-                valor.grid(row=0, column=row[0])
+                if len(str(row[1])) > 35:
+                    texto_completo = str(row[1])
+                    texto_recortado = texto_completo[0:35]
+                    texto_tabla_vista = texto_recortado + "..."
+                    valor = Label(
+                        valores_subframe, 
+                        text=texto_tabla_vista,
+                        font=formato.tipo_de_letra_tablaep,
+                        width=18,
+                        height=3,#se modifico  
+                        relief='groove',
+                        bg= formato.fondo_valores_de_tabla,
+                        wraplength=125, 
+                        justify="center")
+                    Hovertip_Sefa(valor, text = texto_completo)
+                    valor.grid(row=0, column=row[0])
+                else:
+                    valor = Label(
+                        valores_subframe, 
+                        text= row[1],
+                        font=formato.tipo_de_letra_tabla,
+                        width= 18,#se modificó 
+                        height = 2,
+                        relief='groove',
+                        bg= formato.fondo_valores_de_tabla,
+                        wraplength=125, 
+                        justify="center")
+                    valor.grid(row=0, column=row[0])
 
             # Agregar botones
             
@@ -1651,3 +1811,165 @@ class Hovertip_Sefa(Hovertip):
             font=("Helvetica", 8)
             )
         label.pack()
+
+# X. Vitrina pendientes jefe
+
+class Vitrina_pendientes_jefe_firma(Frame):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, window, tabla, funcion1, funcion2, height=100, width=1600):
+        """Constructor"""
+
+        self.window = window
+        self.tabla = tabla
+        self.funcion1 = funcion1
+        self.funcion2 = funcion2
+        #self.funcion3 = funcion3
+        self.height = height
+        self.width = width
+        
+        self.main_frame = Frame(self.window)
+        self.main_frame.pack()
+
+        # Encabezados (entorno)
+
+        self.frame_base_encabezado = Frame(self.main_frame)
+        self.frame_base_encabezado.pack()
+
+        self.canvas_encabezado = Canvas(self.frame_base_encabezado, height=23, width=self.width)
+        self.canvas_encabezado.pack(side='left', fill='both', expand=True)
+
+        self.empty_frame = Frame(self.frame_base_encabezado, width=12)
+        self.empty_frame.pack(side='right', fill='both', expand=True)
+
+        self.frame_dentro_del_canvas = Frame(self.canvas_encabezado) # Éste es el frame donde colocaremos los encabezados
+
+        self.canvas_encabezado.create_window(4, 4, window=self.frame_dentro_del_canvas, anchor='nw')
+
+        # Cuerpo de la tabla (entorno)
+
+        self.frame_con_scrollbar = VerticalScrolledFrame(self.main_frame, height=self.height, width=self.width)
+        self.frame_con_scrollbar.pack()
+
+        # Incluir encabezados de la tabla
+
+        columnas_de_tabla = self.tabla.columns.values.tolist()
+        indice_de_columnas = range(len(columnas_de_tabla))
+        elementos_columnas = {
+            'index': indice_de_columnas,
+            'columnas': columnas_de_tabla
+            }
+        tabla_columna = pd.DataFrame(elementos_columnas)
+
+        for i,row in tabla_columna.iterrows():
+            encabezado = Label(
+                self.frame_dentro_del_canvas, 
+                text=row[1],
+                font=formato.tipo_de_letra_tabla,
+                fg = formato.color_negro,
+                width= 22,#se modifico estaba con 21 
+                height=1, 
+                relief='groove',
+                bg=formato.fondo_encabezados_de_tabla
+                )
+            encabezado.grid(row=0, column=row[0])
+    
+        opciones_label = Label(
+            self.frame_dentro_del_canvas,
+            text='OPCIONES',
+            font=formato.tipo_de_letra_tabla,
+            fg = formato.color_negro,
+            width= 10, #se modifico
+            height=1, 
+            relief='groove',
+            bg=formato.fondo_encabezados_de_tabla
+            )
+        opciones_label.grid(row=0, column=len(columnas_de_tabla)+1)
+
+        # Incluir elementos en el cuerpo de la tabla
+
+        for i, row in self.tabla.iterrows():
+            valores_subframe = Frame(self.frame_con_scrollbar)
+            valores_subframe.pack()
+            lista_de_valores = row.values
+            indice_de_valores = range(len(lista_de_valores))
+            elementos_valores = {
+                'index': indice_de_valores,
+                'valores': lista_de_valores 
+            }
+
+            # Valores de la tabla
+            tabla_valor = pd.DataFrame(elementos_valores)
+            for i,row in tabla_valor.iterrows():
+                if len(str(row[1])) > 35:
+                    texto_completo = str(row[1])
+                    texto_recortado = texto_completo[0:35]
+                    texto_tabla_vista = texto_recortado + "..."
+                    valor = Label(
+                        valores_subframe, 
+                        text= texto_tabla_vista,
+                        font=formato.tipo_de_letra_tabla,
+                        width= 22,#se modificó 
+                        height = 2,
+                        relief='groove',
+                        bg= formato.fondo_valores_de_tabla,
+                        wraplength=125, 
+                        justify="center")
+                    Hovertip_Sefa(valor, text = texto_completo)
+                    valor.grid(row=0, column=row[0])
+                else:
+                    valor = Label(
+                        valores_subframe, 
+                        text= row[1],
+                        font=formato.tipo_de_letra_tabla,
+                        width= 22,#se modificó 
+                        height = 2,
+                        relief='groove',
+                        bg= formato.fondo_valores_de_tabla,
+                        wraplength=125, 
+                        justify="center")
+                    valor.grid(row=0, column=row[0])
+
+            # Agregar botones
+            
+            argumento = lista_de_valores[0]
+
+            boton_ver = Label(
+                valores_subframe,
+                text='VER',
+                font=formato.tipo_de_letra_tabla,
+                fg = formato.letras_del_boton,
+                width=10,
+                height= 2,
+                relief='groove',
+                cursor="hand2",
+                bg=formato.boton_sin_que_pase_cursor
+            )
+            boton_ver.grid(row=0, column=len(lista_de_valores)+1)
+            boton_ver.bind("<Button-1>",lambda e,argumento=argumento:self.funcion1(argumento))
+            self.Efecto_de_boton(boton_ver)
+
+    #----------------------------------------------------------------------
+    def Efecto_de_boton(self, boton):
+        """"""
+
+        #----------------------------------------------------------------------
+        def Pasar_sobre_boton(e):
+            """"""
+            boton['bg'] = formato.boton_cuando_pasa_cursor
+            boton['fg'] = formato.letras_del_boton_cuando_pasa_cursor
+
+        #----------------------------------------------------------------------
+        def Dejar_boton(e):
+            """"""
+            boton['bg'] = formato.boton_sin_que_pase_cursor
+            boton['fg'] = formato.letras_del_boton
+
+        boton.bind('<Enter>', Pasar_sobre_boton)
+        boton.bind('<Leave>', Dejar_boton)
+
+    #----------------------------------------------------------------------
+    def Eliminar_vitrina(self):
+        """"""
+        self.main_frame.destroy()
